@@ -1,0 +1,1404 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>[CXI] Galaxy Call UX Prototype · Audio Eraser</title>
+<style>
+/* ============================================================
+   기본
+   ============================================================ */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#0b0c10;color:#fff;
+  font-family:"Samsung Sharp Sans","Segoe UI Variable","Segoe UI","Malgun Gothic",Arial,sans-serif}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.ic{width:100%;height:100%;display:block;fill:none;stroke:currentColor;
+  stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ic.fill{fill:currentColor;stroke:none}
+
+/* ============================================================
+   상단 헤더 / 탭
+   ============================================================ */
+.app{padding:24px 24px 40px;min-height:100vh}
+.top{max-width:none;margin:0 auto 46px;display:flex;flex-wrap:wrap;gap:16px;
+  justify-content:space-between;align-items:center}
+.top h1{margin:0;font-size:20px;letter-spacing:-.2px}
+.top .sub{margin:6px 0 0;font-size:12.5px;color:#7f8899}
+.top-right{display:flex;align-items:center;gap:14px}
+.tabs{display:flex;gap:4px;padding:4px;background:#171922;border:1px solid #2c3040;border-radius:14px}
+.tabs button{min-width:132px;padding:10px 18px;border-radius:10px;font-weight:650;
+  font-size:13.5px;color:#828b9d;transition:.15s}
+.tabs button.active{background:#2b6ae0;color:#fff;box-shadow:0 4px 14px #1d4fae55}
+
+/* ============================================================
+   스테이지 / 카드
+   ============================================================ */
+/* --- 1안 / 2안 비교 레이아웃 --- */
+.stage{margin:0 auto;display:flex;justify-content:center;align-items:flex-start;
+  flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px}
+.plan{flex:1 1 0;min-width:0;padding:0 28px;display:flex;flex-direction:column;align-items:center}
+.plan+.plan{border-left:1px solid #2a2f3f}
+.plan-head{display:flex;align-items:center;justify-content:center;gap:13px;
+  margin-bottom:20px;padding:0 2px;height:34px}
+.plan-head .badge{flex:0 0 auto;padding:6px 13px;border-radius:10px;
+  font-size:14px;font-weight:800;letter-spacing:.2px}
+.plan-head .badge.ep{background:#2e3446;color:#a9b2c5}
+.plan-head .badge.cxi{background:#2b6ae0;color:#fff;box-shadow:0 4px 14px #1d4fae55}
+.plan-head b{font-size:19px;font-weight:700;white-space:nowrap}
+.plan-head small{font-size:14.5px;color:#8b94a6;white-space:nowrap}
+.row{display:flex;gap:20px;align-items:flex-start;justify-content:center}
+.card{flex:0 0 auto}
+.card[hidden]{display:none}
+.card-title{height:26px;display:flex;align-items:center;justify-content:center;gap:7px;
+  font-size:12.5px;font-weight:600;color:#c6ccda;margin-bottom:10px}
+.card-title:before{content:"";width:6px;height:6px;border-radius:50%;background:#3b7ce8}
+
+/* 단말 프레임 */
+.phone{position:relative;width:390px;height:844px;border-radius:44px;overflow:hidden;
+  background:#15161f;box-shadow:0 0 0 7px #05060a,0 22px 50px #000a;user-select:none}
+.screen{position:absolute;inset:0;overflow:hidden}
+.flash{animation:flash .45s ease}
+@keyframes flash{0%,100%{box-shadow:0 0 0 7px #05060a,0 22px 50px #000a}
+  45%{box-shadow:0 0 0 7px #3b7ce8,0 0 34px #3b7ce8aa,0 22px 50px #000a}}
+
+/* 상태바 / 내비게이션 */
+.statusbar{position:absolute;z-index:12;top:16px;left:26px;right:24px;height:22px;
+  display:flex;justify-content:space-between;align-items:center;font-size:14.5px;font-weight:650}
+.statusbar .right{display:flex;align-items:center;gap:6px}
+.statusbar .right .ic{width:16px;height:16px;stroke-width:1.9}
+.batt{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:17px;
+  padding:0 4px;border-radius:9px;background:#fff;color:#22283a;font-size:10.5px;font-weight:800}
+.navbar{position:absolute;z-index:12;bottom:16px;left:0;right:0;display:flex;
+  justify-content:center;gap:104px;align-items:center;color:#fff;opacity:.92}
+.navbar .ic{width:17px;height:17px;stroke-width:2}
+.gesturebar{position:absolute;z-index:12;bottom:11px;left:50%;transform:translateX(-50%);
+  width:126px;height:5px;border-radius:5px;background:#ffffffb0}
+
+/* ============================================================
+   1. Native 콜 화면
+   ============================================================ */
+.call{background:
+  radial-gradient(58% 34% at 92% 79%,#c99a6a 0%,#a67a5300 62%),
+  radial-gradient(46% 26% at 90% 45%,#9c5763 0%,#8c505c00 65%),
+  radial-gradient(70% 45% at 8% 96%,#141527 0%,#14152700 70%),
+  linear-gradient(158deg,#1e1f36 0%,#2a3050 42%,#3d3a55 72%,#4b4152 100%)}
+.call-top{position:absolute;top:62px;left:22px;right:22px;height:52px;
+  display:grid;grid-template-columns:52px 1fr 52px;align-items:center}
+.ae-btn{width:48px;height:48px;border-radius:50%;background:#ffffff2e;
+  display:grid;place-items:center;transition:.16s;backdrop-filter:blur(6px)}
+.ae-btn .ic{width:26px;height:26px}
+.ae-btn.on{background:#fff;color:#1a64dc;box-shadow:0 0 0 4px #6d9df255,0 6px 18px #12336e66}
+.ae-btn:active{transform:scale(.9)}
+.call-timer{display:flex;align-items:center;justify-content:center;gap:9px;font-size:17px;letter-spacing:.2px}
+.call-timer .ic{width:19px;height:19px}
+.call-vid{justify-self:end;width:34px;height:34px;display:grid;place-items:center}
+.call-vid .ic{width:29px;height:29px}
+.call-who{position:absolute;top:138px;left:0;right:0;text-align:center}
+.call-who h2{margin:0;font-size:33px;font-weight:400;letter-spacing:-1px}
+.call-who p{margin:12px 0 0;font-size:16px;opacity:.95}
+.voip-tag{display:inline-flex;margin-top:14px;padding:5px 13px;border-radius:20px;
+  background:#ffffff26;font-size:12px}
+.spark{position:absolute;top:302px;right:46px;width:50px;height:50px;border-radius:50%;
+  background:#ffffff26;display:grid;place-items:center}
+.spark .ic{width:24px;height:24px}
+.spark:active{transform:scale(.92)}
+.call-grid{position:absolute;top:392px;left:26px;right:26px;
+  display:grid;grid-template-columns:repeat(3,1fr);row-gap:30px;text-align:center}
+.call-grid .round{width:64px;height:64px;margin:0 auto 12px;border-radius:50%;
+  background:#ffffff26;display:grid;place-items:center;transition:.15s}
+.call-grid .round .ic{width:30px;height:30px}
+.call-grid button{font-size:14px}
+.call-grid button:active .round{transform:scale(.9);background:#ffffff3d}
+.call-grid button.on .round{background:#fff;color:#1f2a44}
+.hang{position:absolute;bottom:88px;left:50%;transform:translateX(-50%);
+  width:80px;height:80px;border-radius:50%;background:#e8342b;
+  display:grid;place-items:center;box-shadow:0 8px 24px #7d100e5c}
+.hang .ic{width:36px;height:36px;transform:rotate(133deg)}
+.hang:active{transform:translateX(-50%) scale(.93)}
+
+/* ============================================================
+   2. 퀵패널 (공통 골격)
+   ============================================================ */
+.qp{padding:0 14px}
+.qp-head{position:absolute;top:60px;left:22px;right:20px;display:flex;
+  justify-content:space-between;align-items:center}
+.qp-head .now{display:flex;align-items:baseline;gap:10px}
+.qp-head .now b{font-size:19px;font-weight:600}
+.qp-head .now span{font-size:17px;opacity:.95}
+.qp-head .tools{display:flex;gap:19px}
+.qp-head .tools .ic{width:21px;height:21px}
+
+.body>*{flex:0 0 auto}
+.tile-row{display:flex;gap:9px}
+.tile-row>.tile{flex:1 1 0;min-width:0}
+.tile{flex:1;min-width:0;display:flex;align-items:center;gap:11px;padding:9px 12px;
+  border-radius:26px;text-align:left;transition:.15s;overflow:hidden}
+.tile:active{transform:scale(.975)}
+.tile .tic{flex:0 0 auto;border-radius:50%;display:grid;place-items:center}
+.tile .tic .ic{width:26px;height:26px}
+.tile .tx{min-width:0}
+.tile .tx b{display:block;font-size:14.5px;font-weight:600;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.tile .tx small{display:block;font-size:12px;margin-top:2px;opacity:.85;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+/* 브랜드 타일 subtext : 폭을 넘치면 좌우로 흐르게 (넘치지 않으면 정지) */
+.mq{overflow:hidden}
+.mq>span{display:inline-block;white-space:nowrap;will-change:transform}
+.mq.run>span{animation:mq 6.5s ease-in-out infinite}
+@keyframes mq{
+  0%,14%   {transform:translateX(0)}
+  46%,60%  {transform:translateX(var(--mq,0px))}
+  92%,100% {transform:translateX(0)}
+}
+.tile .chev{margin-left:auto;flex:0 0 auto;width:16px;height:16px;opacity:.85}
+
+.gwrap{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.qgrid{flex:1 1 auto;border-radius:28px;padding:16px 8px 10px;display:grid;
+  grid-template-columns:repeat(4,1fr);row-gap:14px;align-content:center}
+.qitem{text-align:center;font-size:11px;line-height:1.24}
+.qitem .b{width:45px;height:45px;margin:0 auto 8px;border-radius:50%;
+  display:grid;place-items:center;transition:.15s}
+.qitem .b .ic{width:23px;height:23px}
+.qitem:active .b{transform:scale(.9)}
+.dots{display:flex;justify-content:center;gap:5px;margin-top:8px}
+.dots i{width:16px;height:3px;border-radius:3px;background:#ffffff4d}
+.dots i.on{background:#fff}
+
+.slider-row{display:flex;align-items:center;gap:11px}
+.track{position:relative;flex:1;height:46px;border-radius:26px;overflow:hidden}
+.fill{position:absolute;inset:0 auto 0 0;border-radius:26px;background:#fff;
+  display:flex;align-items:center;padding-left:16px;color:#2a3350}
+.fill .ic{width:22px;height:22px}
+.knob{flex:0 0 auto;width:46px;height:46px;border-radius:50%;display:grid;place-items:center}
+.knob .ic{width:22px;height:22px}
+
+.media{height:50px;border-radius:26px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 20px;font-size:14px}
+.media .l{display:flex;align-items:center;gap:12px}
+.media .ic{width:19px;height:19px}
+.media .play .ic{width:22px;height:22px}
+
+.sims{border-radius:26px;display:grid;grid-template-columns:repeat(3,1fr);
+  text-align:center;padding:12px 0;font-size:10px;line-height:1.45}
+.sims>div+div{border-left:1px solid #ffffff22}
+.sims .hd{display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:12px;font-weight:600;margin-bottom:4px}
+.simbadge{width:13px;height:13px;border-radius:3.5px;display:grid;place-items:center;
+  font-size:8px;font-weight:800;color:#fff}
+
+.cast{border-radius:26px;display:flex;align-items:center;gap:10px;padding:10px 14px}
+.cast .tx b{display:block;font-size:13.5px;font-weight:600}
+.cast .tx small{display:block;font-size:11px;opacity:.85;margin-top:2px}
+.cast .btns{margin-left:auto;display:flex;align-items:center;gap:8px}
+.cast .btns .cb{width:36px;height:36px;border-radius:50%;display:grid;place-items:center}
+.cast .btns .cb .ic{width:19px;height:19px}
+.cast .btns .more .ic{width:17px;height:17px}
+
+/* --- Native 퀵패널 (다크) --- */
+.qp-native{color:#fff;background:
+  radial-gradient(60% 40% at 100% 4%,#4a4468 0%,#4a446800 62%),
+  linear-gradient(168deg,#403a5c 0%,#343759 44%,#2b3052 100%)}
+.qp-native .body{position:absolute;top:104px;left:14px;right:14px;bottom:52px;
+  display:flex;flex-direction:column;gap:11px}
+.qp-native .tile{background:#ffffff1f;box-shadow:inset 0 1px 0 #ffffff14}
+.qp-native .tile .tic{width:52px;height:52px;background:#ffffff30}
+.qp-native .body>.tile.brand{flex:0 0 70px}
+.qp-native .tile.brand{height:70px}
+.qp-voip .body>.tile.brand{flex:0 0 70px}
+/* 브랜드 타일: 배경은 고정, 아이콘 원만 Off(그레이) ↔ On(흰색) */
+.qp-native .tile.brand .tic{background:#ffffff30;color:#fff}
+.qp-native .tile.brand.on .tic{background:#fff;color:#1a5fd0;
+  box-shadow:0 0 0 3px #ffffff30,0 4px 14px #12336e3d}
+.qp-native .tile.dual{height:70px}
+.qp-native .qgrid{background:#ffffff17;box-shadow:inset 0 1px 0 #ffffff12}
+.qp-native .qitem .b{background:#ffffff26}
+.qp-native .qitem.on .b{background:#fff;color:#28324c}
+.qp-native .qitem.ring .b{background:#ffffff1c;box-shadow:inset 0 0 0 1.6px #ffffffcc}
+.qp-native .track{background:#5c6ba4a1}
+.qp-native .knob{background:#5c6ba4a1}
+.qp-native .media{background:#3a4c88a8}
+.qp-native .sims{background:#3a4c88a8}
+
+/* --- VoIP 퀵패널 (Native 와 동일한 다크 테마) --- */
+.qp-voip{color:#fff;background:
+  radial-gradient(60% 40% at 100% 4%,#4a4468 0%,#4a446800 62%),
+  linear-gradient(168deg,#403a5c 0%,#343759 44%,#2b3052 100%)}
+.qp-voip .body{position:absolute;top:96px;left:14px;right:14px;bottom:34px;
+  display:flex;flex-direction:column;gap:9px}
+.qp-voip .tile{height:70px;background:#ffffff1f;box-shadow:inset 0 1px 0 #ffffff14}
+.qp-voip .tile .tic{width:52px;height:52px;background:#ffffff30}
+/* 브랜드 타일: 배경은 고정, 아이콘 원만 Off(그레이) ↔ On(흰색) */
+.qp-voip .tile.brand .tic{background:#ffffff30;color:#fff}
+.qp-voip .tile.brand.on .tic{background:#fff;color:#1a5fd0;
+  box-shadow:0 0 0 3px #ffffff3d,0 4px 12px #2a54a03d}
+.qp-voip .tile.fx .tic{background:#ea4256;color:#fff}
+.qp-voip .tile.wifi{background:#ffffff2e;box-shadow:inset 0 1px 0 #ffffff2e,0 0 20px #ffffff1c}
+.qp-voip .qgrid{background:#ffffff17;box-shadow:inset 0 1px 0 #ffffff12;
+  border-radius:26px;padding:13px 8px 8px;row-gap:11px}
+.qp-voip .qitem .b{width:42px;height:42px;background:#ffffff26}
+.qp-voip .qitem.on .b{background:#fff;color:#28324c}
+.qp-voip .qitem.ring .b{background:#ffffff1c;box-shadow:inset 0 0 0 1.6px #ffffffcc}
+.qp-voip .track,.qp-voip .knob{background:#5c6ba4a1;height:42px}
+.qp-voip .knob{width:42px}
+.qp-voip .media{background:#3a4c88a8;height:46px}
+.qp-voip .sims{background:#3a4c88a8;padding:10px 0}
+.qp-voip .cast{background:#3a4c88a8;height:60px}
+.qp-voip .cast .btns .cb{background:#ffffff26}
+
+/* ============================================================
+   3. Audio eraser 뎁스인 화면 (Native / VoIP 공통 골격)
+   ============================================================ */
+.sw-row{display:flex;align-items:center;justify-content:space-between}
+.sw-row span{font-size:21px;font-weight:500}
+.sw{width:52px;height:30px;border-radius:16px;padding:3px;background:#ffffff8c;transition:.18s}
+.sw i{display:block;width:24px;height:24px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px #0003;transition:.18s}
+.sw.on{background:#1667de}
+.sw.on i{transform:translateX(22px)}
+.hr{height:1px;background:#ffffff59;margin:26px 0 40px}
+.done{margin-top:auto;align-self:center;padding:12px 30px;font-size:19px;font-weight:600}
+
+.detail-n,.detail-v{color:#fff;background:#14151f}
+/* 블러 배경 : 각 탭의 테마를 그대로 흐림 처리 */
+.detail-n .bg,.detail-v .bg{position:absolute;inset:-60px;
+  filter:blur(46px) saturate(1.05);transform:scale(1.12)}
+/* 블러 원본 : Native 콜 / 퀵패널의 다크 테마 (양 탭 공통) */
+.detail-n .bg,.detail-v .bg{background:
+  radial-gradient(58% 34% at 92% 79%,#c99a6a 0%,#a67a5300 62%),
+  radial-gradient(46% 26% at 90% 45%,#9c5763 0%,#8c505c00 65%),
+  radial-gradient(60% 40% at 100% 4%,#4a4468 0%,#4a446800 62%),
+  linear-gradient(168deg,#403a5c 0%,#343759 44%,#2b3052 100%)}
+.detail-n .scrim,.detail-v .scrim{position:absolute;inset:0;
+  background:linear-gradient(180deg,#0b0c1233,#0b0c1266)}
+.detail-n h2,.detail-v h2{position:absolute;z-index:3;top:96px;left:0;right:0;margin:0;
+  text-align:center;font-size:31px;font-weight:600;letter-spacing:-.4px}
+
+.dpanel{position:absolute;z-index:3;top:170px;left:18px;right:18px;bottom:80px;
+  border-radius:34px;padding:24px 22px 20px;
+  background:linear-gradient(155deg,#ffffff1f,#ffffff12);
+  box-shadow:inset 0 1px 0 #ffffff2e;backdrop-filter:blur(14px);
+  display:flex;flex-direction:column}
+.dpanel .sw-row{padding:4px 4px 0}
+.dpanel .sw-row span{font-size:20px;font-weight:500}
+.dpanel .hr{height:1px;background:#ffffff30;margin:22px 0 20px}
+
+.mic-head{display:flex;align-items:center;gap:8px;padding:0 4px;margin-bottom:14px;
+  font-size:13px;font-weight:600;color:#c3cbe0;letter-spacing:.1px}
+.mic-head .ic{width:16px;height:16px}
+
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;align-items:flex-start;gap:14px;padding:14px 12px;border-radius:20px;
+  text-align:left;transition:.15s}
+.opt:active{transform:scale(.985);background:#ffffff10}
+.radio{flex:0 0 auto;width:22px;height:22px;margin-top:2px;border-radius:50%;
+  box-shadow:inset 0 0 0 2px #ffffff8c;display:grid;place-items:center;transition:.16s}
+.radio i{width:10px;height:10px;border-radius:50%;background:transparent;transition:.16s}
+.opt.on .radio{box-shadow:inset 0 0 0 2px #4f92f5;background:#4f92f51f}
+.opt.on .radio i{background:#4f92f5}
+.opt .tx b{display:block;font-size:17px;font-weight:600;margin-bottom:5px}
+.opt .tx small{display:block;font-size:12.5px;line-height:1.5;color:#b6bdd0}
+
+.dpanel .done{margin-top:auto;align-self:center;padding:12px 30px;font-size:19px;font-weight:600}
+
+/* ============================================================
+   반응형
+   ============================================================ */
+@media(max-width:1700px){.stage{zoom:.9}}
+@media(max-width:1500px){.stage{zoom:.76}}
+@media(max-width:1240px){.stage{zoom:.62}}
+@media(max-width:1000px){.stage{zoom:.5}}
+
+/* VoIP 2안은 타일 행이 하나 더 있어 세로 여백을 조금 줄인다 */
+.qp-voip .body{gap:7px}
+.qp-voip .qgrid{padding:10px 8px 8px}
+
+/* ============================================================
+   5. 2안 전용 — Mic mode 타일 / Mic mode 뎁스인 화면
+   ============================================================ */
+.qp-native .tile.mic .tic,.qp-voip .tile.mic .tic{background:#e2823a;color:#fff}
+.qp-native .tile.mic.on .tic,.qp-voip .tile.mic.on .tic{background:#e2823a;color:#fff}
+
+.detail-m{color:#fff;background:#14151f}
+.detail-m .bg{position:absolute;inset:-60px;
+  filter:blur(46px) saturate(1.05);transform:scale(1.12);background:
+  radial-gradient(58% 34% at 92% 79%,#c99a6a 0%,#a67a5300 62%),
+  radial-gradient(46% 26% at 90% 45%,#9c5763 0%,#8c505c00 65%),
+  radial-gradient(60% 40% at 100% 4%,#4a4468 0%,#4a446800 62%),
+  linear-gradient(168deg,#403a5c 0%,#343759 44%,#2b3052 100%)}
+.detail-m .scrim{position:absolute;inset:0;
+  background:linear-gradient(180deg,#0b0c1233,#0b0c1266)}
+.detail-m h2{position:absolute;z-index:3;top:228px;left:0;right:0;margin:0;text-align:center;
+  font-size:31px;font-weight:600;letter-spacing:-.4px}
+
+.mpanel{position:absolute;z-index:3;top:302px;left:26px;right:26px;border-radius:34px;
+  padding:22px 20px 16px;background:linear-gradient(155deg,#ffffff1f,#ffffff12);
+  box-shadow:inset 0 1px 0 #ffffff2e;backdrop-filter:blur(14px)}
+.mopts{display:flex;flex-direction:column;gap:2px}
+.mopt{display:flex;align-items:center;gap:15px;width:100%;padding:14px 12px;
+  border-radius:18px;text-align:left;font-size:17px;font-weight:500;transition:.15s}
+.mopt:active{transform:scale(.985);background:#ffffff10}
+.mpanel .done{display:block;margin:14px auto 0;padding:12px 30px;font-size:19px;font-weight:600}
+.mopt.on .radio{box-shadow:inset 0 0 0 2px #4f92f5;background:#4f92f51f}
+.mopt.on .radio i{background:#4f92f5}
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true"><defs>
+
+<!-- Audio eraser : 파형 + 지우개 (지우개 끝은 배경이 비치는 실제 컷아웃) -->
+<symbol id="i-ae" viewBox="0 0 24 24">
+  <mask id="m-ae" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+    <rect width="24" height="24" fill="#000"/>
+    <!-- 파형 5줄 : 참고 이미지 실측값을 viewBox 24 로 환산 -->
+    <g stroke="#fff" stroke-width="1.9" stroke-linecap="round" fill="none">
+      <path d="M1.09 7.55v1.75"/>
+      <path d="M4.85 5.3v6.3"/>
+      <path d="M8.51 1.06v14.78"/>
+      <path d="M12.03 5.79v5.69"/>
+      <path d="M15.72 7.3v1.15"/>
+    </g>
+    <!-- 지우개 : 44° 회전한 라운드 사각형 + 팁의 D자 반원 홀(컷아웃) -->
+    <g transform="rotate(-44 17.12 16.15)">
+      <rect x="11.67" y="12" width="10.9" height="8.3" rx="3" fill="#fff"/>
+      <path d="M15.82 12.63A3.52 3.52 0 0 0 15.82 19.67Z" fill="#000"/>
+    </g>
+  </mask>
+  <rect width="24" height="24" fill="currentColor" stroke="none" mask="url(#m-ae)"/>
+</symbol>
+
+<!-- Standard : 중앙 목소리 + 주변음 1겹 (균형) -->
+<symbol id="i-standard" viewBox="0 0 24 24">
+  <g stroke="currentColor" stroke-linecap="round" fill="none">
+    <g stroke-width="2.15">
+      <path d="M8.5 10.4v3.2"/><path d="M12 6.6v10.8"/><path d="M15.5 10.4v3.2"/>
+    </g>
+    <g stroke-width="1.8">
+      <path d="M4.9 8.9a7.2 7.2 0 000 6.2"/>
+      <path d="M19.1 8.9a7.2 7.2 0 010 6.2"/>
+    </g>
+  </g>
+</symbol>
+
+<!-- Full spectrum : 중앙 목소리 + 주변음 2겹 (모든 소리 전달) -->
+<symbol id="i-spectrum" viewBox="0 0 24 24">
+  <g stroke="currentColor" stroke-linecap="round" fill="none">
+    <g stroke-width="2.15">
+      <path d="M9.1 10.6v2.8"/><path d="M12 5.6v12.8"/><path d="M14.9 10.6v2.8"/>
+    </g>
+    <g stroke-width="1.75">
+      <path d="M6 8.6a7.6 7.6 0 000 6.8"/>
+      <path d="M2.6 5.8a13 13 0 000 12.4"/>
+      <path d="M18 8.6a7.6 7.6 0 010 6.8"/>
+      <path d="M21.4 5.8a13 13 0 010 12.4"/>
+    </g>
+  </g>
+</symbol>
+
+<!-- 마이크 (Mic mode 헤더용) -->
+<symbol id="i-mic" viewBox="0 0 24 24">
+  <path d="M12 3.2a3.1 3.1 0 013.1 3.1v5.4A3.1 3.1 0 0112 14.8a3.1 3.1 0 01-3.1-3.1V6.3A3.1 3.1 0 0112 3.2Z" fill="currentColor" stroke="none"/>
+  <path d="M5.9 11.1a6.1 6.1 0 0012.2 0M12 17.9v3" stroke-width="1.9"/>
+</symbol>
+
+<!-- 통화 -->
+<symbol id="i-phone" viewBox="0 0 24 24">
+  <path d="M6.6 3.2 8.9 7l-2 2.2c.9 2.4 3.5 5 5.9 5.9l2.2-2 3.8 2.3c.9.6 1 1.4.4 2.1l-1.6 1.8c-1 1.1-2.4 1.3-4 .8-4.3-1.4-9-6.1-10.4-10.4-.5-1.6-.3-3 .8-4l1.8-1.6c.7-.6 1.5-.5 2.1.4Z" fill="currentColor" stroke="none"/>
+</symbol>
+<symbol id="i-video" viewBox="0 0 24 24">
+  <rect x="2" y="6" width="14" height="12" rx="3.6" fill="currentColor" stroke="none"/>
+  <path d="M17.6 10.4 21 8.1c.6-.4 1.4 0 1.4.8v6.2c0 .8-.8 1.2-1.4.8l-3.4-2.3Z" fill="currentColor" stroke="none"/>
+</symbol>
+<symbol id="i-sparkle" viewBox="0 0 24 24">
+  <path d="M9.5 3.2 11 8l4.8 1.5L11 11l-1.5 4.8L8 11l-4.8-1.5L8 8Z" fill="currentColor" stroke="none"/>
+  <path d="M17.6 13.4l.8 2.6 2.6.8-2.6.8-.8 2.6-.8-2.6-2.6-.8 2.6-.8Z" fill="currentColor" stroke="none"/>
+</symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4.5v15M4.5 12h15" stroke-width="1.9"/></symbol>
+<symbol id="i-mic-off" viewBox="0 0 24 24">
+  <path d="M12 3.2a3.1 3.1 0 013.1 3.1v5.4A3.1 3.1 0 0112 14.8a3.1 3.1 0 01-3.1-3.1V6.3A3.1 3.1 0 0112 3.2Z"/>
+  <path d="M5.9 11.1a6.1 6.1 0 0012.2 0M12 17.9v3"/>
+  <path d="M3.4 3 20.6 21" stroke-width="2"/>
+</symbol>
+<symbol id="i-bt" viewBox="0 0 24 24">
+  <path d="M12 2.6v18.8M12 2.6l5 5-10 10M12 21.4l5-5-10-10" stroke-width="1.9"/>
+</symbol>
+<symbol id="i-speaker" viewBox="0 0 24 24">
+  <path d="M3 9.4h3.2L11.4 5v14L6.2 14.6H3Z" fill="currentColor" stroke="none"/>
+  <path d="M15 8.6a4.6 4.6 0 010 6.8M18.2 5.8a8.6 8.6 0 010 12.4" stroke-width="1.8"/>
+</symbol>
+<symbol id="i-keypad" viewBox="0 0 24 24">
+  <g fill="currentColor" stroke="none">
+    <circle cx="6.5" cy="4.5" r="1.55"/><circle cx="12" cy="4.5" r="1.55"/><circle cx="17.5" cy="4.5" r="1.55"/>
+    <circle cx="6.5" cy="9.5" r="1.55"/><circle cx="12" cy="9.5" r="1.55"/><circle cx="17.5" cy="9.5" r="1.55"/>
+    <circle cx="6.5" cy="14.5" r="1.55"/><circle cx="12" cy="14.5" r="1.55"/><circle cx="17.5" cy="14.5" r="1.55"/>
+    <circle cx="6.5" cy="19.5" r="1.55"/><circle cx="12" cy="19.5" r="1.55"/><circle cx="17.5" cy="19.5" r="1.55"/>
+  </g>
+</symbol>
+<symbol id="i-more" viewBox="0 0 24 24">
+  <g fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="19" r="1.9"/></g>
+</symbol>
+
+<!-- 상태바 / 내비 -->
+<symbol id="i-wifi" viewBox="0 0 24 24">
+  <path d="M2.4 8.6a14.5 14.5 0 0119.2 0M5.6 12.2a10 10 0 0112.8 0M8.8 15.8a5.6 5.6 0 016.4 0" stroke-width="1.9"/>
+  <circle cx="12" cy="19.2" r="1.5" fill="currentColor" stroke="none"/>
+</symbol>
+<symbol id="i-signal" viewBox="0 0 24 24">
+  <g fill="currentColor" stroke="none">
+    <rect x="2" y="15" width="3.4" height="5" rx="1"/><rect x="7.2" y="11.6" width="3.4" height="8.4" rx="1"/>
+    <rect x="12.4" y="8" width="3.4" height="12" rx="1"/><rect x="17.6" y="4.4" width="3.4" height="15.6" rx="1"/>
+  </g>
+</symbol>
+<symbol id="i-hd" viewBox="0 0 24 24">
+  <rect x="1.6" y="5.6" width="20.8" height="12.8" rx="6.4" stroke-width="1.6"/>
+  <path d="M6 9v6M6 12h3.2M9.2 9v6M12.8 9v6h1.8a3 3 0 000-6Z" stroke-width="1.5"/>
+</symbol>
+<symbol id="i-recent" viewBox="0 0 24 24"><path d="M4.5 5v14M12 5v14M19.5 5v14" stroke-width="2"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="4" stroke-width="2"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 4.5 7.5 12l7 7.5" stroke-width="2"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2.2"/></symbol>
+
+<!-- 퀵패널 툴 -->
+<symbol id="i-pencil" viewBox="0 0 24 24">
+  <path d="M4 20h4l11-11a2.8 2.8 0 10-4-4L4 16Z"/><path d="M14.5 5.5 18.5 9.5"/>
+</symbol>
+<symbol id="i-power" viewBox="0 0 24 24">
+  <path d="M12 3v8"/><path d="M6.6 6.2a8 8 0 1010.8 0" />
+</symbol>
+<symbol id="i-gear" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="3.2"/>
+  <path d="M12 2.4l1.5 2.3 2.7-.5.6 2.7 2.5 1.1-1.1 2.5 1.7 2.2-2.1 1.8.3 2.7-2.7.3-1.5 2.3L12 18.6l-2.4 1.2-1.5-2.3-2.7-.3.3-2.7-2.1-1.8L5.3 10.5 4.2 8l2.5-1.1.6-2.7 2.7.5Z"/>
+</symbol>
+
+<!-- 퀵 토글 -->
+<symbol id="i-rotate" viewBox="0 0 24 24">
+  <rect x="7.6" y="7.6" width="8.8" height="8.8" rx="2.4"/>
+  <path d="M4.6 8.6A8 8 0 0111 3.6M19.4 15.4A8 8 0 0113 20.4"/>
+  <path d="M3.4 5.4v3.4h3.4M20.6 18.6v-3.4h-3.4"/>
+</symbol>
+<symbol id="i-plane" viewBox="0 0 24 24">
+  <path d="M12 2.6c.9 0 1.5 1 1.5 2.2v4l7 4.2v2.2l-7-2.2v3.6l2.5 2v1.8L12 19.4l-4 .8v-1.8l2.5-2v-3.6l-7 2.2v-2.2l7-4.2v-4c0-1.2.6-2.2 1.5-2.2Z" fill="currentColor" stroke="none"/>
+</symbol>
+<symbol id="i-flash" viewBox="0 0 24 24">
+  <path d="M8.4 3.4h7.2v2.8l-1 1.6v11.4a1.4 1.4 0 01-1.4 1.4h-2.4a1.4 1.4 0 01-1.4-1.4V7.8l-1-1.6Z"/>
+  <path d="M9.4 10.8h5.2"/>
+</symbol>
+<symbol id="i-data" viewBox="0 0 24 24">
+  <path d="M8 20.4V4.6M8 4.6 4.4 8.2M8 4.6l3.6 3.6"/>
+  <path d="M16 3.6v15.8M16 19.4l3.6-3.6M16 19.4l-3.6-3.6"/>
+</symbol>
+<symbol id="i-hotspot" viewBox="0 0 24 24">
+  <path d="M4.4 19.6h15.2"/><circle cx="6.4" cy="17.6" r="1.6" fill="currentColor" stroke="none"/>
+  <path d="M5 12.4a7.6 7.6 0 017.6 7.2M5 7.2a12.8 12.8 0 0112.8 12.4"/>
+</symbol>
+<symbol id="i-battsave" viewBox="0 0 24 24">
+  <rect x="6.4" y="4.6" width="11.2" height="16.8" rx="3"/>
+  <path d="M9.6 2.6h4.8"/><path d="M12 8.6v7.6M8.8 12.4h6.4"/>
+</symbol>
+<symbol id="i-pin" viewBox="0 0 24 24">
+  <path d="M12 2.4c-3.8 0-6.9 3-6.9 6.8 0 5 6.9 12.4 6.9 12.4s6.9-7.4 6.9-12.4c0-3.8-3.1-6.8-6.9-6.8Z" fill="currentColor" stroke="none"/>
+  <circle cx="12" cy="9.2" r="2.5" fill="#fff" stroke="none"/>
+</symbol>
+<symbol id="i-win" viewBox="0 0 24 24">
+  <rect x="2.6" y="5.4" width="12.4" height="13.2" rx="2.6"/>
+  <path d="M18.4 8.4h2.2a1 1 0 011 1v8.2a1 1 0 01-1 1h-2.2Z"/>
+  <path d="M6.4 12h5M9 9.6l2.4 2.4L9 14.4"/>
+</symbol>
+
+<!-- 슬라이더 / 미디어 -->
+<symbol id="i-sun" viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/>
+  <g stroke-width="1.9"><path d="M12 1.8v2.6M12 19.6v2.6M1.8 12h2.6M19.6 12h2.6M4.8 4.8 6.6 6.6M17.4 17.4l1.8 1.8M19.2 4.8 17.4 6.6M6.6 17.4 4.8 19.2"/></g>
+</symbol>
+<symbol id="i-moon" viewBox="0 0 24 24">
+  <path d="M20 14.6A8.8 8.8 0 019.4 4 9.4 9.4 0 1020 14.6Z" fill="currentColor" stroke="none"/>
+</symbol>
+<symbol id="i-note" viewBox="0 0 24 24">
+  <path d="M9.6 17.4V4.6l9-1.8v12.8"/>
+  <circle cx="6.6" cy="18" r="3" fill="currentColor" stroke="none"/>
+  <circle cx="15.6" cy="16" r="3" fill="currentColor" stroke="none"/>
+</symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M6.6 3.8 19.4 12 6.6 20.2Z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-call-sq" viewBox="0 0 24 24"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-tv" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-speaker-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-cast" viewBox="0 0 24 24">
+  <path d="M8.4 8.4a5 5 0 000 7.2M15.6 8.4a5 5 0 010 7.2"/>
+  <circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/>
+</symbol>
+</defs></svg>
+
+
+<main class="app">
+<header class="top">
+  <div>
+    <h1>[CXI] Galaxy Call UX Prototype · Audio Eraser</h1>
+    <p class="sub">Native/VoIP call의 Audio eraser 진입점 및 인터렉션 프로토타입 · 1안(EP 검토안) vs 2안(CXI 신규 제안) 비교</p>
+  </div>
+  <div class="top-right">
+    <div class="tabs">
+      <button class="active" data-tab="native">Native Call</button>
+      <button data-tab="voip">VoIP Call</button>
+    </div>
+  </div>
+</header>
+
+<section class="stage" id="stage">
+
+<div class="plan">
+  <div class="plan-head">
+    <span class="badge ep">1안</span><b>EP 검토안</b><small>Audio eraser 안에서 On/Off 와 Mic mode 를 함께 제어</small>
+  </div>
+  <div class="row">
+<article class="card" data-for="native" data-plan="ep">
+  <div class="card-title">콜 화면</div>
+  <div class="phone" id="ph-call-epN">
+    <div class="screen call">
+      <div class="statusbar">
+        <span>12:45</span>
+        <span class="right">
+          <svg class="ic"><use href="#i-hd"/></svg>
+          <svg class="ic"><use href="#i-signal"/></svg>
+          <span class="batt">100</span>
+        </span>
+      </div>
+
+      <div class="call-top">
+        <button class="ae-btn" id="aeBtn-epN" title="Audio eraser">
+          <svg class="ic"><use href="#i-ae"/></svg>
+        </button>
+        <div class="call-timer">
+          <svg class="ic"><use href="#i-phone"/></svg><span class="callTime">00:20</span>
+        </div>
+        <div class="call-vid"><svg class="ic"><use href="#i-video"/></svg></div>
+      </div>
+      <div class="call-who">
+        <h2>Christina Adams</h2>
+        <p>Mobile 012-3456-7890</p>
+      </div>
+
+      <button class="spark"><svg class="ic"><use href="#i-sparkle"/></svg></button>
+
+      <div class="call-grid">
+        <button><span class="round"><svg class="ic"><use href="#i-plus"/></svg></span>Add call</button>
+        <button data-toggle="mute"><span class="round"><svg class="ic"><use href="#i-mic-off"/></svg></span>Mute</button>
+        <button data-toggle="bt"><span class="round"><svg class="ic"><use href="#i-bt"/></svg></span>Bluetooth</button>
+        <button data-toggle="spk"><span class="round"><svg class="ic"><use href="#i-speaker"/></svg></span>Speaker</button>
+        <button><span class="round"><svg class="ic"><use href="#i-keypad"/></svg></span>Keypad</button>
+        <button><span class="round"><svg class="ic"><use href="#i-more"/></svg></span>More</button>
+      </div>
+
+      <button class="hang"><svg class="ic"><use href="#i-phone"/></svg></button>
+
+      <div class="navbar">
+        <svg class="ic"><use href="#i-recent"/></svg>
+        <svg class="ic"><use href="#i-home"/></svg>
+        <svg class="ic"><use href="#i-back"/></svg>
+      </div>
+    </div>
+  </div>
+</article>
+
+<article class="card" data-for="native" data-plan="ep">
+  <div class="card-title">퀵패널 화면 (Native 통화 중)</div>
+  <div class="phone" id="ph-qp-epN">
+    <div class="screen qp qp-native">
+      <div class="statusbar">
+        <span></span>
+        <span class="right">
+          <svg class="ic"><use href="#i-wifi"/></svg>
+          <svg class="ic"><use href="#i-signal"/></svg>
+          <span class="batt">100</span>
+        </span>
+      </div>
+
+      <div class="qp-head">
+        <div class="now"><b>12:45</b><span>Wed, Dec 30</span></div>
+        <div class="tools">
+          <svg class="ic"><use href="#i-pencil"/></svg>
+          <svg class="ic"><use href="#i-power"/></svg>
+          <svg class="ic"><use href="#i-gear"/></svg>
+        </div>
+      </div>
+
+      <div class="body">
+        <button class="tile brand" id="tileAe-epN">
+          <span class="tic"><svg class="ic"><use href="#i-ae"/></svg></span>
+          <span class="tx"><b>Audio eraser</b><small class="mq" id="subAe-epN"><span>Mic mode: Standard</span></small></span>
+        </button>
+
+        <div class="tile-row">
+          <button class="tile dual">
+            <span class="tic"><svg class="ic"><use href="#i-wifi"/></svg></span>
+            <span class="tx"><b>WiFi</b><small>CellSpot5GHz</small></span>
+          </button>
+          <button class="tile dual">
+            <span class="tic"><svg class="ic"><use href="#i-bt"/></svg></span>
+            <span class="tx"><b>Bluetooth</b></span>
+          </button>
+        </div>
+
+        <div class="gwrap">
+          <div class="qgrid">
+            <button class="qitem ring"><span class="b"><svg class="ic"><use href="#i-rotate"/></svg></span>Auto<br>rotate</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-plane"/></svg></span>Airplane<br>mode</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-flash"/></svg></span>Flashlight</button>
+            <button class="qitem on"><span class="b"><svg class="ic"><use href="#i-data"/></svg></span>Mobile<br>data</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-hotspot"/></svg></span>Mobile<br>Hotspot</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-battsave"/></svg></span>Power<br>saving</button>
+            <button class="qitem on"><span class="b"><svg class="ic"><use href="#i-pin"/></svg></span>Location</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-win"/></svg></span>Link to<br>Windows</button>
+          </div>
+          <div class="dots"><i class="on"></i><i></i></div>
+        </div>
+
+        <div class="slider-row">
+          <div class="track"><div class="fill" style="width:46%"><svg class="ic"><use href="#i-sun"/></svg></div></div>
+          <div class="knob"><svg class="ic"><use href="#i-moon"/></svg></div>
+        </div>
+        <div class="slider-row">
+          <div class="track"><div class="fill" style="width:38%"><svg class="ic"><use href="#i-speaker"/></svg></div></div>
+          <div class="knob"><svg class="ic"><use href="#i-speaker"/></svg></div>
+        </div>
+
+        <div class="media">
+          <span class="l"><svg class="ic"><use href="#i-note"/></svg><b>Play music</b></span>
+          <span class="play"><svg class="ic"><use href="#i-play"/></svg></span>
+        </div>
+
+        <div class="sims">
+          <div><span class="hd"><span class="simbadge" style="background:#3d7bef">L</span>Calls</span>SIM 1<br>Carrier Name</div>
+          <div><span class="hd"><span class="simbadge" style="background:#8f5ce0">M</span>Messages</span>SIM 1<br>Carrier Name</div>
+          <div><span class="hd"><span class="simbadge" style="background:#2fae6a">D</span>Mobile data</span>SIM 1<br>Carrier Name</div>
+        </div>
+      </div>
+
+      <div class="gesturebar"></div>
+    </div>
+  </div>
+</article>
+
+<article class="card" data-for="native" data-plan="ep">
+  <div class="card-title">Audio eraser 뎁스인 화면</div>
+  <div class="phone" id="ph-ae-epN">
+    <div class="screen detail-v">
+      <div class="bg"></div>
+      <div class="scrim"></div>
+
+      <div class="statusbar">
+        <span></span>
+        <span class="right">
+          <svg class="ic"><use href="#i-wifi"/></svg>
+          <svg class="ic"><use href="#i-signal"/></svg>
+          <span class="batt">100</span>
+        </span>
+      </div>
+
+      <h2>Audio eraser</h2>
+
+      <div class="dpanel">
+        <div class="sw-row">
+          <span id="swText-epN">Off</span>
+          <button class="sw" id="sw-epN"><i></i></button>
+        </div>
+        <div class="hr"></div>
+
+        <div class="mic-head">
+          <svg class="ic"><use href="#i-mic"/></svg>Mic mode
+        </div>
+
+        <div class="opts" id="opts-epN">
+          <button class="opt" data-mic="standard">
+            <span class="radio"><i></i></span>
+            <span class="tx">
+              <b>Standard</b>
+              <small>Optimize your voice quality.</small>
+            </span>
+          </button>
+          <button class="opt" data-mic="focus">
+            <span class="radio"><i></i></span>
+            <span class="tx">
+              <b>Voice focus</b>
+              <small>Reduce background noise so others hear your voice more clearly.</small>
+            </span>
+          </button>
+        </div>
+
+        <button class="done" data-done="epN">Done</button>
+      </div>
+
+      <div class="navbar">
+        <svg class="ic"><use href="#i-recent"/></svg>
+        <svg class="ic"><use href="#i-home"/></svg>
+        <svg class="ic"><use href="#i-back"/></svg>
+      </div>
+    </div>
+  </div>
+</article>
+
+<article class="card" data-for="voip" data-plan="ep">
+  <div class="card-title">퀵패널 화면 (VoIP 통화 중)</div>
+  <div class="phone" id="ph-qp-epV">
+    <div class="screen qp qp-voip">
+      <div class="statusbar">
+        <span></span>
+        <span class="right">
+          <svg class="ic"><use href="#i-wifi"/></svg>
+          <svg class="ic"><use href="#i-signal"/></svg>
+          <span class="batt">100</span>
+        </span>
+      </div>
+
+      <div class="qp-head">
+        <div class="now"><b>12:45</b><span>Wed, Dec 30</span></div>
+        <div class="tools">
+          <svg class="ic"><use href="#i-pencil"/></svg>
+          <svg class="ic"><use href="#i-power"/></svg>
+          <svg class="ic"><use href="#i-gear"/></svg>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="tile-row">
+          <button class="tile fx">
+            <span class="tic"><svg class="ic"><use href="#i-video"/></svg></span>
+            <span class="tx"><b>Video call eff…</b><small>4 effects</small></span>
+          </button>
+          <button class="tile brand" id="tileAe-epV">
+            <span class="tic"><svg class="ic"><use href="#i-ae"/></svg></span>
+            <span class="tx"><b>Audio eraser</b><small class="mq" id="subAe-epV"><span>Mic mode: Standard</span></small></span>
+          </button>
+        </div>
+
+        <div class="tile-row">
+          <button class="tile wifi">
+            <span class="tic"><svg class="ic"><use href="#i-wifi"/></svg></span>
+            <span class="tx"><b>WiFi</b><small>CellSpot5GHz</small></span>
+            <svg class="ic chev"><use href="#i-chev"/></svg>
+          </button>
+          <button class="tile">
+            <span class="tic"><svg class="ic"><use href="#i-bt"/></svg></span>
+            <span class="tx"><b>Bluetooth</b></span>
+          </button>
+        </div>
+
+        <div class="gwrap">
+          <div class="qgrid">
+            <button class="qitem ring"><span class="b"><svg class="ic"><use href="#i-rotate"/></svg></span>Auto<br>rotate</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-plane"/></svg></span>Airplane<br>mode</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-flash"/></svg></span>Flashlight</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-data"/></svg></span>Mobile<br>data</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-hotspot"/></svg></span>Mobile<br>Hotspot</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-battsave"/></svg></span>Power<br>saving</button>
+            <button class="qitem on"><span class="b"><svg class="ic"><use href="#i-pin"/></svg></span>Location</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-win"/></svg></span>Link to<br>Windows</button>
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <div class="track"><div class="fill" style="width:36%"><svg class="ic"><use href="#i-sun"/></svg></div></div>
+          <div class="knob"><svg class="ic"><use href="#i-moon"/></svg></div>
+        </div>
+        <div class="slider-row">
+          <div class="track"><div class="fill" style="width:36%"><svg class="ic"><use href="#i-speaker"/></svg></div></div>
+          <div class="knob"><svg class="ic"><use href="#i-speaker"/></svg></div>
+        </div>
+
+        <div class="media">
+          <span class="l"><svg class="ic"><use href="#i-note"/></svg><b>Play music</b></span>
+          <span class="play"><svg class="ic"><use href="#i-play"/></svg></span>
+        </div>
+
+        <div class="sims">
+          <div><span class="hd">Calls</span><span class="simbadge" style="background:#3d7bef;display:inline-grid;vertical-align:-2px;margin-right:3px">L</span>SIM 1<br>Carrier Name</div>
+          <div><span class="hd">Messages</span><span class="simbadge" style="background:#8f5ce0;display:inline-grid;vertical-align:-2px;margin-right:3px">M</span>SIM 1<br>Carrier Name</div>
+          <div><span class="hd">Data</span><span class="simbadge" style="background:#2fae6a;display:inline-grid;vertical-align:-2px;margin-right:3px">D</span>SIM 1<br>Carrier Name</div>
+        </div>
+
+        <div class="cast">
+          <span class="tx"><b>Samsung TV</b><small>Living Room</small></span>
+          <span class="btns">
+            <span class="cb"><svg class="ic"><use href="#i-tv"/></svg></span>
+            <span class="cb"><svg class="ic"><use href="#i-speaker-sm"/></svg></span>
+            <span class="cb"><svg class="ic"><use href="#i-cast"/></svg></span>
+            <span class="cb more" style="background:none"><svg class="ic"><use href="#i-more"/></svg></span>
+          </span>
+        </div>
+      </div>
+
+      <div class="gesturebar"></div>
+    </div>
+  </div>
+</article>
+
+<article class="card" data-for="voip" data-plan="ep">
+  <div class="card-title">Audio eraser 뎁스인 화면</div>
+  <div class="phone" id="ph-ae-epV">
+    <div class="screen detail-v">
+      <div class="bg"></div>
+      <div class="scrim"></div>
+
+      <div class="statusbar">
+        <span></span>
+        <span class="right">
+          <svg class="ic"><use href="#i-wifi"/></svg>
+          <svg class="ic"><use href="#i-signal"/></svg>
+          <span class="batt">100</span>
+        </span>
+      </div>
+
+      <h2>Audio eraser</h2>
+
+      <div class="dpanel">
+        <div class="sw-row">
+          <span id="swText-epV">Off</span>
+          <button class="sw" id="sw-epV"><i></i></button>
+        </div>
+        <div class="hr"></div>
+
+        <div class="mic-head">
+          <svg class="ic"><use href="#i-mic"/></svg>Mic mode
+        </div>
+
+        <div class="opts" id="opts-epV">
+          <button class="opt" data-mic="standard">
+            <span class="radio"><i></i></span>
+            <span class="tx">
+              <b>Standard</b>
+              <small>Optimize your voice quality.</small>
+            </span>
+          </button>
+          <button class="opt" data-mic="focus">
+            <span class="radio"><i></i></span>
+            <span class="tx">
+              <b>Voice focus</b>
+              <small>Reduce background noise so others hear your voice more clearly.</small>
+            </span>
+          </button>
+          <button class="opt" data-mic="full">
+            <span class="radio"><i></i></span>
+            <span class="tx">
+              <b>Full spectrum</b>
+              <small>Capture your voice and surroundings more fully.</small>
+            </span>
+          </button>
+        </div>
+
+        <button class="done" data-done="epV">Done</button>
+      </div>
+
+      <div class="navbar">
+        <svg class="ic"><use href="#i-recent"/></svg>
+        <svg class="ic"><use href="#i-home"/></svg>
+        <svg class="ic"><use href="#i-back"/></svg>
+      </div>
+    </div>
+  </div>
+</article>
+  </div>
+</div>
+
+<div class="plan">
+  <div class="plan-head">
+    <span class="badge cxi">2안</span><b>CXI 신규 제안</b><small>Audio eraser(On/Off) 와 Mic mode 를 타일 단위로 분리</small>
+  </div>
+  <div class="row">
+<article class="card" data-for="native" data-plan="cxi">
+  <div class="card-title">콜 화면</div>
+  <div class="phone" id="ph-call-cxN">
+    <div class="screen call">
+      <div class="statusbar">
+        <span>12:45</span>
+        <span class="right">
+          <svg class="ic"><use href="#i-hd"/></svg>
+          <svg class="ic"><use href="#i-signal"/></svg>
+          <span class="batt">100</span>
+        </span>
+      </div>
+
+      <div class="call-top">
+        <button class="ae-btn" id="aeBtn-cxN" title="Audio eraser">
+          <svg class="ic"><use href="#i-ae"/></svg>
+        </button>
+        <div class="call-timer">
+          <svg class="ic"><use href="#i-phone"/></svg><span class="callTime">00:20</span>
+        </div>
+        <div class="call-vid"><svg class="ic"><use href="#i-video"/></svg></div>
+      </div>
+      <div class="call-who">
+        <h2>Christina Adams</h2>
+        <p>Mobile 012-3456-7890</p>
+      </div>
+
+      <button class="spark"><svg class="ic"><use href="#i-sparkle"/></svg></button>
+
+      <div class="call-grid">
+        <button><span class="round"><svg class="ic"><use href="#i-plus"/></svg></span>Add call</button>
+        <button data-toggle="mute"><span class="round"><svg class="ic"><use href="#i-mic-off"/></svg></span>Mute</button>
+        <button data-toggle="bt"><span class="round"><svg class="ic"><use href="#i-bt"/></svg></span>Bluetooth</button>
+        <button data-toggle="spk"><span class="round"><svg class="ic"><use href="#i-speaker"/></svg></span>Speaker</button>
+        <button><span class="round"><svg class="ic"><use href="#i-keypad"/></svg></span>Keypad</button>
+        <button><span class="round"><svg class="ic"><use href="#i-more"/></svg></span>More</button>
+      </div>
+
+      <button class="hang"><svg class="ic"><use href="#i-phone"/></svg></button>
+
+      <div class="navbar">
+        <svg class="ic"><use href="#i-recent"/></svg>
+        <svg class="ic"><use href="#i-home"/></svg>
+        <svg class="ic"><use href="#i-back"/></svg>
+      </div>
+    </div>
+  </div>
+</article>
+
+<article class="card" data-for="native" data-plan="cxi">
+  <div class="card-title">퀵패널 화면 (Native 통화 중)</div>
+  <div class="phone" id="ph-qp-cxN">
+    <div class="screen qp qp-native">
+      <div class="statusbar">
+        <span></span>
+        <span class="right">
+          <svg class="ic"><use href="#i-wifi"/></svg>
+          <svg class="ic"><use href="#i-signal"/></svg>
+          <span class="batt">100</span>
+        </span>
+      </div>
+
+      <div class="qp-head">
+        <div class="now"><b>12:45</b><span>Wed, Dec 30</span></div>
+        <div class="tools">
+          <svg class="ic"><use href="#i-pencil"/></svg>
+          <svg class="ic"><use href="#i-power"/></svg>
+          <svg class="ic"><use href="#i-gear"/></svg>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="tile-row">
+          <button class="tile brand" id="tileAe-cxN">
+            <span class="tic"><svg class="ic"><use href="#i-ae"/></svg></span>
+            <span class="tx"><b>Audio eraser</b><small class="mq" id="subAe-cxN"><span>Off</span></small></span>
+          </button>
+          <button class="tile mic" id="tileMic-cxN">
+            <span class="tic"><svg class="ic"><use href="#i-mic"/></svg></span>
+            <span class="tx"><b>Mic mode</b><small class="mq" id="subMic-cxN"><span>Standard</span></small></span>
+          </button>
+        </div>
+
+        <div class="tile-row">
+          <button class="tile dual">
+            <span class="tic"><svg class="ic"><use href="#i-wifi"/></svg></span>
+            <span class="tx"><b>WiFi</b><small>CellSpot5GHz</small></span>
+          </button>
+          <button class="tile dual">
+            <span class="tic"><svg class="ic"><use href="#i-bt"/></svg></span>
+            <span class="tx"><b>Bluetooth</b></span>
+          </button>
+        </div>
+
+        <div class="gwrap">
+          <div class="qgrid">
+            <button class="qitem ring"><span class="b"><svg class="ic"><use href="#i-rotate"/></svg></span>Auto<br>rotate</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-plane"/></svg></span>Airplane<br>mode</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-flash"/></svg></span>Flashlight</button>
+            <button class="qitem on"><span class="b"><svg class="ic"><use href="#i-data"/></svg></span>Mobile<br>data</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-hotspot"/></svg></span>Mobile<br>Hotspot</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-battsave"/></svg></span>Power<br>saving</button>
+            <button class="qitem on"><span class="b"><svg class="ic"><use href="#i-pin"/></svg></span>Location</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-win"/></svg></span>Link to<br>Windows</button>
+          </div>
+          <div class="dots"><i class="on"></i><i></i></div>
+        </div>
+
+        <div class="slider-row">
+          <div class="track"><div class="fill" style="width:46%"><svg class="ic"><use href="#i-sun"/></svg></div></div>
+          <div class="knob"><svg class="ic"><use href="#i-moon"/></svg></div>
+        </div>
+        <div class="slider-row">
+          <div class="track"><div class="fill" style="width:38%"><svg class="ic"><use href="#i-speaker"/></svg></div></div>
+          <div class="knob"><svg class="ic"><use href="#i-speaker"/></svg></div>
+        </div>
+
+        <div class="media">
+          <span class="l"><svg class="ic"><use href="#i-note"/></svg><b>Play music</b></span>
+          <span class="play"><svg class="ic"><use href="#i-play"/></svg></span>
+        </div>
+
+        <div class="sims">
+          <div><span class="hd"><span class="simbadge" style="background:#3d7bef">L</span>Calls</span>SIM 1<br>Carrier Name</div>
+          <div><span class="hd"><span class="simbadge" style="background:#8f5ce0">M</span>Messages</span>SIM 1<br>Carrier Name</div>
+          <div><span class="hd"><span class="simbadge" style="background:#2fae6a">D</span>Mobile data</span>SIM 1<br>Carrier Name</div>
+        </div>
+      </div>
+
+      <div class="gesturebar"></div>
+    </div>
+  </div>
+</article>
+
+<article class="card" data-for="native" data-plan="cxi">
+  <div class="card-title">Mic mode 뎁스인 화면</div>
+  <div class="phone" id="ph-mic-cxN">
+    <div class="screen detail-m">
+      <div class="bg"></div>
+      <div class="scrim"></div>
+
+      <div class="statusbar">
+        <span></span>
+        <span class="right">
+          <svg class="ic"><use href="#i-wifi"/></svg>
+          <svg class="ic"><use href="#i-signal"/></svg>
+          <span class="batt">100</span>
+        </span>
+      </div>
+
+      <h2>Mic mode</h2>
+
+      <div class="mpanel">
+        <div class="mopts" id="opts-cxN">
+          <button class="mopt" data-mic="standard">
+            <span class="radio"><i></i></span>Standard
+          </button>
+          <button class="mopt" data-mic="focus">
+            <span class="radio"><i></i></span>Voice focus
+          </button>
+        </div>
+        <button class="done" data-done="cxN">Done</button>
+      </div>
+
+      <div class="navbar">
+        <svg class="ic"><use href="#i-recent"/></svg>
+        <svg class="ic"><use href="#i-home"/></svg>
+        <svg class="ic"><use href="#i-back"/></svg>
+      </div>
+    </div>
+  </div>
+</article>
+
+<article class="card" data-for="voip" data-plan="cxi">
+  <div class="card-title">퀵패널 화면 (VoIP 통화 중)</div>
+  <div class="phone" id="ph-qp-cxV">
+    <div class="screen qp qp-voip">
+      <div class="statusbar">
+        <span></span>
+        <span class="right">
+          <svg class="ic"><use href="#i-wifi"/></svg>
+          <svg class="ic"><use href="#i-signal"/></svg>
+          <span class="batt">100</span>
+        </span>
+      </div>
+
+      <div class="qp-head">
+        <div class="now"><b>12:45</b><span>Wed, Dec 30</span></div>
+        <div class="tools">
+          <svg class="ic"><use href="#i-pencil"/></svg>
+          <svg class="ic"><use href="#i-power"/></svg>
+          <svg class="ic"><use href="#i-gear"/></svg>
+        </div>
+      </div>
+
+      <div class="body">
+        <button class="tile brand" id="tileAe-cxV">
+            <span class="tic"><svg class="ic"><use href="#i-ae"/></svg></span>
+            <span class="tx"><b>Audio eraser</b><small class="mq" id="subAe-cxV"><span>Off</span></small></span>
+          </button>
+
+        <div class="tile-row">
+          <button class="tile fx">
+            <span class="tic"><svg class="ic"><use href="#i-video"/></svg></span>
+            <span class="tx"><b>Video call eff…</b><small>4 effects</small></span>
+          </button>
+          <button class="tile mic" id="tileMic-cxV">
+            <span class="tic"><svg class="ic"><use href="#i-mic"/></svg></span>
+            <span class="tx"><b>Mic mode</b><small class="mq" id="subMic-cxV"><span>Standard</span></small></span>
+          </button>
+        </div>
+
+        <div class="tile-row">
+          <button class="tile wifi">
+            <span class="tic"><svg class="ic"><use href="#i-wifi"/></svg></span>
+            <span class="tx"><b>WiFi</b><small>CellSpot5GHz</small></span>
+            <svg class="ic chev"><use href="#i-chev"/></svg>
+          </button>
+          <button class="tile">
+            <span class="tic"><svg class="ic"><use href="#i-bt"/></svg></span>
+            <span class="tx"><b>Bluetooth</b></span>
+          </button>
+        </div>
+
+        <div class="gwrap">
+          <div class="qgrid">
+            <button class="qitem ring"><span class="b"><svg class="ic"><use href="#i-rotate"/></svg></span>Auto<br>rotate</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-plane"/></svg></span>Airplane<br>mode</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-flash"/></svg></span>Flashlight</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-data"/></svg></span>Mobile<br>data</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-hotspot"/></svg></span>Mobile<br>Hotspot</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-battsave"/></svg></span>Power<br>saving</button>
+            <button class="qitem on"><span class="b"><svg class="ic"><use href="#i-pin"/></svg></span>Location</button>
+            <button class="qitem"><span class="b"><svg class="ic"><use href="#i-win"/></svg></span>Link to<br>Windows</button>
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <div class="track"><div class="fill" style="width:36%"><svg class="ic"><use href="#i-sun"/></svg></div></div>
+          <div class="knob"><svg class="ic"><use href="#i-moon"/></svg></div>
+        </div>
+        <div class="slider-row">
+          <div class="track"><div class="fill" style="width:36%"><svg class="ic"><use href="#i-speaker"/></svg></div></div>
+          <div class="knob"><svg class="ic"><use href="#i-speaker"/></svg></div>
+        </div>
+
+        <div class="media">
+          <span class="l"><svg class="ic"><use href="#i-note"/></svg><b>Play music</b></span>
+          <span class="play"><svg class="ic"><use href="#i-play"/></svg></span>
+        </div>
+
+        <div class="sims">
+          <div><span class="hd">Calls</span><span class="simbadge" style="background:#3d7bef;display:inline-grid;vertical-align:-2px;margin-right:3px">L</span>SIM 1<br>Carrier Name</div>
+          <div><span class="hd">Messages</span><span class="simbadge" style="background:#8f5ce0;display:inline-grid;vertical-align:-2px;margin-right:3px">M</span>SIM 1<br>Carrier Name</div>
+          <div><span class="hd">Data</span><span class="simbadge" style="background:#2fae6a;display:inline-grid;vertical-align:-2px;margin-right:3px">D</span>SIM 1<br>Carrier Name</div>
+        </div>
+
+        <div class="cast">
+          <span class="tx"><b>Samsung TV</b><small>Living Room</small></span>
+          <span class="btns">
+            <span class="cb"><svg class="ic"><use href="#i-tv"/></svg></span>
+            <span class="cb"><svg class="ic"><use href="#i-speaker-sm"/></svg></span>
+            <span class="cb"><svg class="ic"><use href="#i-cast"/></svg></span>
+            <span class="cb more" style="background:none"><svg class="ic"><use href="#i-more"/></svg></span>
+          </span>
+        </div>
+      </div>
+
+      <div class="gesturebar"></div>
+    </div>
+  </div>
+</article>
+
+<article class="card" data-for="voip" data-plan="cxi">
+  <div class="card-title">Mic mode 뎁스인 화면</div>
+  <div class="phone" id="ph-mic-cxV">
+    <div class="screen detail-m">
+      <div class="bg"></div>
+      <div class="scrim"></div>
+
+      <div class="statusbar">
+        <span></span>
+        <span class="right">
+          <svg class="ic"><use href="#i-wifi"/></svg>
+          <svg class="ic"><use href="#i-signal"/></svg>
+          <span class="batt">100</span>
+        </span>
+      </div>
+
+      <h2>Mic mode</h2>
+
+      <div class="mpanel">
+        <div class="mopts" id="opts-cxV">
+          <button class="mopt" data-mic="standard">
+            <span class="radio"><i></i></span>Standard
+          </button>
+          <button class="mopt" data-mic="focus">
+            <span class="radio"><i></i></span>Voice focus
+          </button>
+          <button class="mopt" data-mic="full">
+            <span class="radio"><i></i></span>Full spectrum
+          </button>
+        </div>
+        <button class="done" data-done="cxV">Done</button>
+      </div>
+
+      <div class="navbar">
+        <svg class="ic"><use href="#i-recent"/></svg>
+        <svg class="ic"><use href="#i-home"/></svg>
+        <svg class="ic"><use href="#i-back"/></svg>
+      </div>
+    </div>
+  </div>
+</article>
+  </div>
+</div>
+
+</section>
+</main>
+
+<script>
+(() => {
+'use strict';
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const byId = id => document.getElementById(id);
+
+/* ---------------------------------------------------------------
+   설정 · 상태
+   px : 안(ep/cxi) × 탭(native/voip) 조합 키
+   --------------------------------------------------------------- */
+const CFG = [
+  { px:'epN', plan:'ep',  tab:'native' },
+  { px:'epV', plan:'ep',  tab:'voip'   },
+  { px:'cxN', plan:'cxi', tab:'native' },
+  { px:'cxV', plan:'cxi', tab:'voip'   }
+];
+
+/* On/Off 와 Mic mode 는 어떤 안에서도 서로 연동하지 않는다 */
+const ST = {
+  epN: { on:false, mic:'standard' },
+  epV: { on:true,  mic:'standard' },
+  cxN: { on:false, mic:'standard' },
+  cxV: { on:true,  mic:'standard' }
+};
+
+const MIC_LABEL = { standard:'Standard', focus:'Voice focus', full:'Full spectrum' };
+
+let TAB = 'native';
+
+/* ---------------------------------------------------------------
+   subtext 마퀴 : 폭을 넘칠 때만 흐르고, 값이 바뀌면 처음부터 재시작
+   --------------------------------------------------------------- */
+function setSub(el, text) {
+  if (!el) return;
+  const span = el.firstElementChild;
+  if (span.textContent === text) return;
+  span.textContent = text;
+  el.classList.remove('run');
+  span.style.removeProperty('--mq');
+  void el.offsetWidth;
+  const over = span.scrollWidth - el.clientWidth;
+  if (over > 1) {
+    span.style.setProperty('--mq', -(over + 2) + 'px');
+    el.classList.add('run');
+  }
+}
+function remeasureSubs() {
+  $$('.mq').forEach(el => {
+    if (!el.clientWidth) return;
+    const t = el.firstElementChild.textContent;
+    el.firstElementChild.textContent = '';
+    setSub(el, t);
+  });
+}
+
+/* ---------------------------------------------------------------
+   렌더
+   --------------------------------------------------------------- */
+function renderOne(c) {
+  const s = ST[c.px], el = id => byId(id + '-' + c.px);
+
+  const ae = el('aeBtn');   if (ae) ae.classList.toggle('on', s.on);
+  const tl = el('tileAe');  if (tl) tl.classList.toggle('on', s.on);
+  const sw = el('sw');      if (sw) sw.classList.toggle('on', s.on);
+  const st = el('swText');  if (st) st.textContent = s.on ? 'On' : 'Off';
+
+  /* 1안 : Audio eraser 안에서 Mic mode 까지 제어하므로 설정값을 노출
+     2안 : Audio eraser 는 On/Off 전용이므로 상태값만 노출 */
+  setSub(el('subAe'), c.plan === 'ep' ? 'Mic mode: ' + MIC_LABEL[s.mic] : (s.on ? 'On' : 'Off'));
+  setSub(el('subMic'), MIC_LABEL[s.mic]);
+
+  $$('#opts-' + c.px + ' [data-mic]').forEach(o =>
+    o.classList.toggle('on', o.dataset.mic === s.mic));
+}
+
+function render() {
+  $$('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === TAB));
+  $$('.card').forEach(c => { c.hidden = c.dataset.for !== TAB; });
+  CFG.forEach(renderOne);
+  fit();
+}
+
+/* 화면 폭에 맞춰 스테이지 축소 (1안 + 2안 동시 노출) */
+function fit() {
+  const st = $('#stage');
+  st.style.width = 'auto';
+  st.style.zoom  = 1;
+  const need = st.scrollWidth;                        // 원본 크기의 필요 폭
+  const box  = st.parentElement.clientWidth - 48;     // app 안쪽 폭
+  const z    = Math.max(.28, Math.min(1, (box / need) * 0.92));
+  st.style.zoom  = z;
+  st.style.width = (box / z) + 'px';                  // 축소 후에도 안쪽 폭을 꽉 채움
+}
+
+/* 카드 하이라이트 (동기화 시각화) */
+function flash(...ids) {
+  ids.forEach(id => {
+    const el = byId(id); if (!el) return;
+    el.classList.remove('flash');
+    requestAnimationFrame(() => el.classList.add('flash'));
+    setTimeout(() => el.classList.remove('flash'), 480);
+  });
+}
+
+/* ---------------------------------------------------------------
+   인터랙션
+   --------------------------------------------------------------- */
+$$('[data-tab]').forEach(b => b.addEventListener('click', () => {
+  TAB = b.dataset.tab; render(); remeasureSubs();
+}));
+
+CFG.forEach(c => {
+  const p = c.px, el = id => byId(id + '-' + p);
+  const s = ST[p];
+  const CALL = 'ph-call-' + p, QP = 'ph-qp-' + p,
+        AE   = 'ph-ae-'   + p, MIC = 'ph-mic-' + p;
+
+  /* Audio eraser = On/Off 토글 (콜 화면 버튼 / 퀵패널 타일 공통) */
+  const toggle = (...targets) => { s.on = !s.on; render(); flash(...targets); };
+
+  const aeBtn = el('aeBtn');
+  if (aeBtn) aeBtn.addEventListener('click', () => toggle(QP, AE));
+
+  const tile = el('tileAe');
+  if (tile) {
+    let t = null, longFired = false;
+    tile.addEventListener('pointerdown', () => {
+      longFired = false;
+      /* 1안만 Audio eraser 뎁스인이 존재 */
+      if (c.plan === 'ep') t = setTimeout(() => { longFired = true; flash(AE); }, 400);
+    });
+    tile.addEventListener('pointerup', () => {
+      clearTimeout(t);
+      if (longFired) return;
+      toggle(CALL, c.plan === 'ep' ? AE : null);
+    });
+    ['pointerleave', 'pointercancel'].forEach(ev =>
+      tile.addEventListener(ev, () => clearTimeout(t)));
+  }
+
+  /* 1안 : 뎁스인 화면의 마스터 스위치 (Mic mode 는 건드리지 않음) */
+  const sw = el('sw');
+  if (sw) sw.addEventListener('click', () => toggle(CALL, QP));
+
+  /* 2안 : Mic mode 타일 → 별도 화면으로 뎁스인 */
+  const tmic = el('tileMic');
+  if (tmic) tmic.addEventListener('click', () => flash(MIC));
+
+  /* Mic mode 선택 : On/Off 와 무관하게 항상 변경 가능 */
+  $$('#opts-' + p + ' [data-mic]').forEach(o => o.addEventListener('click', () => {
+    s.mic = o.dataset.mic; render(); flash(QP);
+  }));
+
+  const done = $('[data-done="' + p + '"]');
+  if (done) done.addEventListener('click', () => flash(QP));
+});
+
+/* 콜 화면 부가 토글 (Mute / Bluetooth / Speaker) */
+$$('.call-grid [data-toggle]').forEach(b =>
+  b.addEventListener('click', () => b.classList.toggle('on')));
+
+/* 통화 시간 */
+let sec = 20;
+setInterval(() => {
+  sec++;
+  const txt = String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0');
+  $$('.callTime').forEach(e => e.textContent = txt);
+}, 1000);
+
+window.addEventListener('resize', () => { fit(); remeasureSubs(); });
+
+render();
+remeasureSubs();
+})();
+</script>
+</body>
+</html>
