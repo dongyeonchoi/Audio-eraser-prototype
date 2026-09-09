@@ -991,7 +991,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
         <div class="tile-row">
           <button class="tile brand" id="tileAe-cxN">
             <span class="tic"><svg class="ic"><use href="#i-ae"/></svg></span>
-            <span class="tx"><b>Audio eraser</b><small class="mq" id="subAe-cxN"><span>Off</span></small></span>
+            <span class="tx"><b>Audio eraser</b><small>Call</small></span>
           </button>
           <button class="tile mic" id="tileMic-cxN">
             <span class="tic"><svg class="ic"><use href="#i-mic"/></svg></span>
@@ -1114,7 +1114,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
       <div class="body">
         <button class="tile brand" id="tileAe-cxV">
             <span class="tic"><svg class="ic"><use href="#i-ae"/></svg></span>
-            <span class="tx"><b>Audio eraser</b><small class="mq" id="subAe-cxV"><span>Off</span></small></span>
+            <span class="tx"><b>Audio eraser</b><small>Meet</small></span>
           </button>
 
         <div class="tile-row">
@@ -1304,8 +1304,8 @@ function renderOne(c) {
   const st = el('swText');  if (st) st.textContent = s.on ? 'On' : 'Off';
 
   /* 1안 : Audio eraser 안에서 Mic mode 까지 제어하므로 설정값을 노출
-     2안 : Audio eraser 는 On/Off 전용이므로 상태값만 노출 */
-  setSub(el('subAe'), c.plan === 'ep' ? 'Mic mode: ' + MIC_LABEL[s.mic] : (s.on ? 'On' : 'Off'));
+     2안 : subtext 는 고정 라벨(Call / Meet)이므로 업데이트하지 않음 */
+  if (c.plan === 'ep') setSub(el('subAe'), 'Mic mode: ' + MIC_LABEL[s.mic]);
   setSub(el('subMic'), MIC_LABEL[s.mic]);
 
   $$('#opts-' + c.px + ' [data-mic]').forEach(o =>
