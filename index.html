@@ -8,11 +8,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: #0b0c10; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 .app { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 20px; }
-.header { text-align: left; margin-bottom: 60px; }
-.header h1 { font-size: 36px; font-weight: 700; margin-bottom: 14px; letter-spacing: -0.5px; }
-.header p { font-size: 16px; color: #a9b2c5; line-height: 1.6; max-width: 620px; }
-.versions { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; }
-.card { flex: 0 0 500px; padding: 40px 32px; border-radius: 20px; background: linear-gradient(150deg, #ffffff0f, #ffffff08); border: 1px solid #ffffff12; text-decoration: none; color: inherit; transition: all 0.3s; }
+.header { width: 1140px; max-width: 100%; margin: 0 auto 60px; text-align: left; }
+.header h1 { font-size: 48px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.5px; }
+.header p { font-size: 16px; color: #a9b2c5; line-height: 1.6; }
+.versions { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; width: 1140px; max-width: 100%; margin: 0 auto; }
+.card { flex: 0 0 550px; max-width: 100%; padding: 40px 32px; border-radius: 20px; background: linear-gradient(150deg, #ffffff0f, #ffffff08); border: 1px solid #ffffff12; text-decoration: none; color: inherit; transition: all 0.3s; }
 .card:hover { background: linear-gradient(150deg, #ffffff15, #ffffff10); border-color: #ffffff22; transform: translateY(-4px); }
 .card .badge { display: inline-block; padding: 6px 14px; border-radius: 10px; font-size: 13px; font-weight: 800; margin-bottom: 18px; letter-spacing: 0.2px; }
 .card.new .badge { background: #2b6ae0; }
@@ -20,7 +20,7 @@ html, body { height: 100%; background: #0b0c10; color: #fff; font-family: -apple
 .card h2 { font-size: 26px; font-weight: 700; margin-bottom: 12px; }
 .card p { font-size: 15px; line-height: 1.6; color: #c6ccda; margin-bottom: 28px; }
 .card .features { font-size: 14px; color: #8b94a6; margin-bottom: 24px; }
-.card .features li { margin-bottom: 8px; }
+.card .features li { list-style-position: inside; margin-bottom: 8px; }
 .card .btn { display: inline-block; padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 600; transition: all 0.2s; }
 .card.new .btn { background: #2b6ae0; color: #fff; }
 .card.new .btn:hover { background: #1d4fae; box-shadow: 0 4px 14px #1d4fae55; }
@@ -47,8 +47,8 @@ html, body { height: 100%; background: #0b0c10; color: #fff; font-family: -apple
       <h2>Audio eraser/Mic mode 미연동 버전 검토</h2>
       <p>Audio eraser/Mic mode 미연동 1안(EP 검토안)과 2안(CXI 신규 제안)을 비교</p>
       <ul class="features">
-        <li>✓ Audio eraser On/Off ↔ Mic mode 미연동</li>
-        <li>✓ Quick panel 내 Audio eraser/Mic mode 타일 제공 방안 </li>
+        <li>Audio eraser On/Off ↔ Mic mode 미연동</li>
+        <li>Quick panel 내 Audio eraser/Mic mode 타일 제공 방안 </li>
       </ul>
       <span class="btn">검토 내용 보기 →</span>
     </a>
@@ -59,8 +59,8 @@ html, body { height: 100%; background: #0b0c10; color: #fff; font-family: -apple
       <h2>Audio eraser/Mic mode 연동 버전 검토</h2>
       <p>EP/UX 검토안에 대한 CXI 신규 제안</p>
       <ul class="features">
-        <li>✓ VoIP 통화 시 Audio eraser와 Full spectrum간 상호배타적 구조 개선</li>
-        <li>✓ Buds 설정 구조와 유사한 노이즈 단계 조절 UI 제공 방안</li>
+        <li>VoIP 통화 시 Audio eraser와 Full spectrum간 상호배타적 구조 개선</li>
+        <li>Buds 설정 구조와 유사한 노이즈 단계 조절 UI 제공 방안</li>
       </ul>
       <span class="btn">기존 검토안 보기 →</span>
     </a>
