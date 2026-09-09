@@ -37,7 +37,11 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 /* --- 1안 / 2안 비교 레이아웃 --- */
 .stage{margin:0 auto;display:flex;justify-content:center;align-items:flex-start;
   flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px}
-.plan{flex:1 1 0;min-width:0;padding:0 28px;display:flex;flex-direction:column;align-items:center}
+.plan{flex:1 1 auto;min-width:min-content;padding:0 28px;
+  display:flex;flex-direction:column;align-items:center}
+/* 배율 계산용 : 이 상태에서 '원본 크기의 필요 폭'을 측정한다 */
+.stage.measuring{width:max-content!important}
+.stage.measuring .plan{flex:0 0 auto}
 .plan+.plan{border-left:1px solid #2a2f3f}
 .plan-head{display:flex;align-items:center;justify-content:center;gap:13px;
   margin-bottom:20px;padding:0 2px;height:34px}
@@ -308,6 +312,14 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 @media(max-width:1500px){.stage{zoom:.76}}
 @media(max-width:1240px){.stage{zoom:.62}}
 @media(max-width:1000px){.stage{zoom:.5}}
+
+/* 좁은 화면 : 1안 / 2안을 위아래로 전환 */
+@media(max-width:900px){
+  .stage{flex-direction:column;align-items:center}
+  .plan{padding:0}
+  .plan+.plan{border-left:0;border-top:1px solid #2a2f3f;margin-top:36px;padding-top:36px}
+  .top{margin-bottom:28px}
+}
 
 /* VoIP 2안은 타일 행이 하나 더 있어 세로 여백을 조금 줄인다 */
 .qp-voip .body{gap:7px}
@@ -1310,13 +1322,28 @@ function render() {
 /* 화면 폭에 맞춰 스테이지 축소 (1안 + 2안 동시 노출) */
 function fit() {
   const st = $('#stage');
-  st.style.width = 'auto';
-  st.style.zoom  = 1;
-  const need = st.scrollWidth;                        // 원본 크기의 필요 폭
-  const box  = st.parentElement.clientWidth - 48;     // app 안쪽 폭
-  const z    = Math.max(.28, Math.min(1, (box / need) * 0.92));
+
+  /* 측정 : 그룹이 줄어들지 않는 상태에서 원본 크기의 필요 폭을 잰다.
+     (그냥 재면 그룹이 컨테이너에 맞춰 줄어든 값이 나와 배율이 과대 계산되고,
+      그 결과 단말끼리 겹쳐 보인다) */
+  st.classList.add('measuring');
+  st.style.zoom = 1;
+  const need = st.scrollWidth;
+  st.classList.remove('measuring');
+
+  const box = st.parentElement.clientWidth - 48;      // app 안쪽 폭
+  const z   = Math.max(.28, Math.min(1, (box / need) * 0.92));
+
   st.style.zoom  = z;
   st.style.width = (box / z) + 'px';                  // 축소 후에도 안쪽 폭을 꽉 채움
+}
+
+/* 리사이즈 중 계산이 매 프레임 쌓이지 않도록 정리 */
+let fitPending = false;
+function fitSoon() {
+  if (fitPending) return;
+  fitPending = true;
+  requestAnimationFrame(() => { fitPending = false; fit(); remeasureSubs(); });
 }
 
 /* 카드 하이라이트 (동기화 시각화) */
@@ -1394,7 +1421,7 @@ setInterval(() => {
   $$('.callTime').forEach(e => e.textContent = txt);
 }, 1000);
 
-window.addEventListener('resize', () => { fit(); remeasureSubs(); });
+window.addEventListener('resize', fitSoon);
 
 render();
 remeasureSubs();
